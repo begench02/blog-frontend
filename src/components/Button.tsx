@@ -5,7 +5,7 @@ type TProps = {
 }
 
 export default function Button({ text }: TProps) {
-    return <ButtonStyled>{text}</ButtonStyled>
+    return <ButtonStyled type='submit'>{text}</ButtonStyled>
 }
 
 const ButtonStyled = styled.button`

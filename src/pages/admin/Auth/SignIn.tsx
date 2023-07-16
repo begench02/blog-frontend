@@ -8,6 +8,9 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import cookie from 'js-cookie'
 import { useAuth } from 'hooks/useAuth'
+import { useState } from 'react'
+import Eye from 'assets/eye.svg'
+import ClosedEye from 'assets/eye-closed.svg'
 
 interface IForm {
     email: string
@@ -21,9 +24,14 @@ interface ISignInRes {
 }
 
 export default function AdminSignIn() {
-    const { handleSubmit, register } = useForm<IForm>()
+    const {
+        handleSubmit,
+        register,
+        formState: { errors }
+    } = useForm<IForm>()
     const auth = useAuth()
     const navigate = useNavigate()
+    const [showPassword, changeShowPassword] = useState(false)
 
     const signUp = useMutation({
         mutationFn: async (data: FieldValues) => {
@@ -45,40 +53,49 @@ export default function AdminSignIn() {
             }
         }
     })
-
+    
     return (
-        <Wrapper>
-            <Main>
-                <Heading>Sign In</Heading>
-                <form onSubmit={handleSubmit(data => signUp.mutate(data))}>
+        <Main>
+            <Heading>Sign In</Heading>
+            <Form onSubmit={handleSubmit(data => signUp.mutate(data))}>
+                {errors.email?.type === 'required' && <ErrorMessage>Email is required</ErrorMessage>}
+                {errors.email?.type === 'pattern' && <ErrorMessage>Wrong email format</ErrorMessage>}
+                <Input
+                    {...register('email', { required: true, pattern: /^\S+@\S+\.\S+$/ })}
+                    placeholder='email'
+                    type='mail'
+                />
+
+                {errors.password?.type === 'required' && <ErrorMessage>Password is required</ErrorMessage>}
+                {errors.password?.type === 'pattern' && (
+                    <ErrorMessage>
+                        Password should contain 6-16 characters, at least one number and at least one special character
+                    </ErrorMessage>
+                )}
+                <PasswordInput>
                     <Input
-                        {...register('email', { required: true, pattern: /^\S+@\S+\.\S+$/ })}
-                        placeholder='email'
-                        type='mail'
-                    />
-                    <Input
-                        {...register('password', { required: true, maxLength: 20 })}
+                        {...register('password', {
+                            required: true,
+                            maxLength: 20,
+                            pattern: /^(?=.*[\d])(?=.*[!@#$%^&*])[\w!@#$%^&*]{6,16}$/
+                        })}
                         placeholder='password'
-                        type='password'
+                        type={showPassword ? 'text' : 'password'}
                     />
-                    <Button text='Submit' />
-                </form>
-            </Main>
-        </Wrapper>
+                    <ShowPassword
+                        src={showPassword ? ClosedEye : Eye}
+                        onClick={() => changeShowPassword(prev => !prev)}
+                    />
+                </PasswordInput>
+                <Button text='Submit' />
+            </Form>
+        </Main>
     )
 }
-
-const Wrapper = styled.div`
-    display: grid;
-    justify-items: center;
-    align-items: center;
-    height: 85vh;
-`
 
 const Main = styled.div`
     display: grid;
     justify-content: center;
-    width: 600px;
     padding: 4rem;
 `
 
@@ -86,6 +103,12 @@ const Heading = styled.h1`
     margin: 2rem 0;
     font-size: 2.5rem;
     text-align: center;
+`
+
+const Form = styled.form`
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 30rem;
 `
 
 const Input = styled.input`
@@ -97,4 +120,22 @@ const Input = styled.input`
     border: 1px solid gray;
     width: 100%;
     border-radius: 6px;
+`
+
+const PasswordInput = styled.div`
+    position: relative;
+`
+
+const ShowPassword = styled.img`
+    position: absolute;
+    top: 30px;
+    right: 20px;
+    width: 20px;
+    height: 25px;
+    cursor: pointer;
+`
+
+const ErrorMessage = styled.div`
+    color: red;
+    text-align: center;
 `
